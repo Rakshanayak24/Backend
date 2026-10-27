@@ -24,8 +24,8 @@ def client():
         finally:
             db.close()
     app.dependency_overrides[get_db] = override_db
+    app.state.session_factory = TestingSession
     with TestClient(app) as test_client:
-        test_client.state.session_factory = TestingSession
         yield test_client
     app.dependency_overrides.clear()
     Base.metadata.drop_all(engine)
@@ -62,7 +62,7 @@ def test_booking_requires_idempotency_key_and_patient_auth(client):
 
 def test_booking_is_idempotent_for_same_user_and_key(client):
     headers = register_and_login(client)
-    session_factory = client.state.session_factory
+    session_factory = app.state.session_factory
     with session_factory.begin() as db:
         doctor_user = User(email="doctor@example.com", password_hash=hash_password("another-long-test-password"),
                            full_name="Test Doctor", role=Role.doctor)
