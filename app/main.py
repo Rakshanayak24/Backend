@@ -20,11 +20,39 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import Base, SessionLocal, engine, get_db
-from app.models import (AuditLog, AvailabilitySlot, Consultation, ConsultationStatus, Doctor,
-                        IdempotencyRecord, OutboxEvent, Prescription, Profile, Role, User)
-from app.schemas import (BookingIn, ConsultationOut, DoctorCreate, LoginIn, PrescriptionIn,
-                         RegisterIn, SlotCreate, SlotOut, StatusUpdate, TokenOut, UserOut)
-from app.security import create_access_token, current_user, hash_password, require_roles, verify_password
+from app.models import (
+    AuditLog,
+    AvailabilitySlot,
+    Consultation,
+    ConsultationStatus,
+    Doctor,
+    IdempotencyRecord,
+    OutboxEvent,
+    Prescription,
+    Profile,
+    Role,
+    User,
+)
+from app.schemas import (
+    BookingIn,
+    ConsultationOut,
+    DoctorCreate,
+    LoginIn,
+    PrescriptionIn,
+    RegisterIn,
+    SlotCreate,
+    SlotOut,
+    StatusUpdate,
+    TokenOut,
+    UserOut,
+)
+from app.security import (
+    create_access_token,
+    current_user,
+    hash_password,
+    require_roles,
+    verify_password,
+)
 
 logging.basicConfig(level=settings.log_level.upper(), format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("amrutam")
