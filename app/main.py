@@ -1,19 +1,20 @@
-import logging
 import base64
 import hashlib
 import hmac
+import logging
 import secrets
 import time
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response, status
+from cryptography.fernet import Fernet, InvalidToken
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from cryptography.fernet import Fernet
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from redis import Redis
-from sqlalchemy import Text, func, select, text, cast
+from redis.exceptions import RedisError
+from sqlalchemy import Text, cast, func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -97,7 +98,7 @@ async def request_context(request: Request, call_next):
             count = _redis.incr(key)
             if count == 1:
                 _redis.expire(key, 120)
-        except Exception:
+        except RedisError:
             # Local development fallback only. Production deployments should keep Redis available.
             if len(_rate_counts) > 10000:
                 _rate_counts.clear()
@@ -176,7 +177,7 @@ def _fernet() -> Fernet:
         raise HTTPException(503, "MFA is not configured")
     try:
         return Fernet(settings.mfa_encryption_key.encode())
-    except Exception:
+    except ValueError:
         raise HTTPException(503, "MFA encryption key is invalid")
 
 
@@ -185,7 +186,7 @@ def verify_totp(user: User, code: str) -> bool:
         return False
     try:
         secret = _fernet().decrypt(user.mfa_secret_encrypted.encode()).decode()
-    except Exception:
+    except (InvalidToken, UnicodeDecodeError):
         return False
     counter = int(time.time()) // 30
     for drift in (-1, 0, 1):

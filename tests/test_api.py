@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -71,8 +71,8 @@ def test_booking_is_idempotent_for_same_user_and_key(client):
         doctor = Doctor(user_id=doctor_user.id, specialty="Family medicine", verified=True)
         db.add(doctor)
         db.flush()
-        slot = AvailabilitySlot(doctor_id=doctor.id, starts_at=datetime.now(timezone.utc) + timedelta(days=1),
-                                ends_at=datetime.now(timezone.utc) + timedelta(days=1, minutes=30))
+        slot = AvailabilitySlot(doctor_id=doctor.id, starts_at=datetime.now(UTC) + timedelta(days=1),
+                                ends_at=datetime.now(UTC) + timedelta(days=1, minutes=30))
         db.add(slot)
         db.flush()
         doctor_id, slot_id = doctor.id, slot.id

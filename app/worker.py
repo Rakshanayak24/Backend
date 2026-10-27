@@ -1,7 +1,7 @@
 """Transactional outbox consumer. External notification delivery is supplied by deployment adapters."""
 import logging
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 
@@ -15,7 +15,7 @@ logger = logging.getLogger("amrutam.worker")
 def process_one() -> bool:
     with SessionLocal.begin() as db:
         event = db.scalar(select(OutboxEvent).where(
-            OutboxEvent.status == "pending", OutboxEvent.available_at <= datetime.now(timezone.utc)
+            OutboxEvent.status == "pending", OutboxEvent.available_at <= datetime.now(UTC)
         ).order_by(OutboxEvent.created_at).with_for_update(skip_locked=True).limit(1))
         if not event:
             return False
@@ -26,8 +26,8 @@ def process_one() -> bool:
                                                          "payload": event.payload})
             event.status = "processed"
             event.last_error = None
-        except Exception as exc:
-            event.available_at = datetime.now(timezone.utc) + timedelta(seconds=min(2 ** event.attempts, 300))
+        except Exception as exc:  # noqa: BLE001 - persist retry state for any adapter failure
+            event.available_at = datetime.now(UTC) + timedelta(seconds=min(2 ** event.attempts, 300))
             event.last_error = type(exc).__name__[:500]
             logger.exception("outbox_event_failed", extra={"event_id": event.id})
     return True
