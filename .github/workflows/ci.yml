@@ -11,9 +11,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.11", cache: pip}
+      - run: python -m pip install --upgrade "setuptools>=84.1.0"
       - run: pip install -e '.[dev]'
       - run: ruff check app tests migrations
       - run: pytest -q
       - run: bandit -q -r app
-      - run: pip-audit
+      - run: pip-audit --skip-editable
       - run: python -c "import json; from app.main import app; json.dump(app.openapi(), open('openapi.json','w'), indent=2)"
