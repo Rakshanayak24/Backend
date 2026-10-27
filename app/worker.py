@@ -26,7 +26,7 @@ def process_one() -> bool:
                                                          "payload": event.payload})
             event.status = "processed"
             event.last_error = None
-        except Exception as exc:  # noqa: BLE001 - persist retry state for any adapter failure
+        except Exception as exc:
             event.available_at = datetime.now(UTC) + timedelta(seconds=min(2 ** event.attempts, 300))
             event.last_error = type(exc).__name__[:500]
             logger.exception("outbox_event_failed", extra={"event_id": event.id})
